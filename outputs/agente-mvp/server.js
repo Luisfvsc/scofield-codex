@@ -539,6 +539,28 @@ function makeStructuredDiff(target, before, addition, location) {
   ];
 }
 
+function makeUnifiedDiff(target, before, after, location) {
+  const startIndex = location.start ?? location.index;
+  const beforeLines = before.split(/\r?\n/);
+  const afterLines = after.split(/\r?\n/);
+  const startLine = startIndex === 0 ? 1 : lineNumberAt(before, startIndex);
+  const oldSliceStart = Math.max(0, startLine - 4);
+  const oldSliceEnd = Math.min(beforeLines.length, startLine + 18);
+  const newSliceStart = Math.max(0, startLine - 4);
+  const newSliceEnd = Math.min(afterLines.length, startLine + 24);
+  const oldChunk = beforeLines.slice(oldSliceStart, oldSliceEnd);
+  const newChunk = afterLines.slice(newSliceStart, newSliceEnd);
+
+  return [
+    `diff --git a/${target} b/${target}`,
+    `--- a/${target}`,
+    `+++ b/${target}`,
+    `@@ -${oldSliceStart + 1},${oldChunk.length} +${newSliceStart + 1},${newChunk.length} @@`,
+    ...oldChunk.map((line) => `-${line}`),
+    ...newChunk.map((line) => `+${line}`),
+  ].join("\n");
+}
+
 function normalizeTarget(target) {
   const fallback = "work/agente-ia/tarefas-aprovadas.md";
   const raw = String(target || fallback).trim().replaceAll("\\", "/");
@@ -550,7 +572,7 @@ function normalizeTarget(target) {
   return raw || fallback;
 }
 
-function createFileProposal(task, plan, requestedTarget) {
+function buildSingleChange(task, plan, requestedTarget) {
   const target = normalizeTarget(requestedTarget);
   const filePath = safeJoin(ROOT, target);
   const before = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
@@ -565,22 +587,58 @@ function createFileProposal(task, plan, requestedTarget) {
   const startIndex = location.start ?? location.index;
   const endIndex = location.end ?? location.index;
   const after = before.slice(0, startIndex) + addition + before.slice(endIndex);
-  const proposalId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const proposal = {
-    id: proposalId,
+  return {
     target,
+    filePath,
+    before,
+    after,
     operation: location.operation,
     anchor: location.anchor,
     beforeLength: before.length,
     afterLength: after.length,
     diff: makeStructuredDiff(target, before, addition, location),
+    unifiedDiff: makeUnifiedDiff(target, before, after, location),
+  };
+}
+
+function proposalTargets(plan, requestedTarget, includeRelated) {
+  const targets = [normalizeTarget(requestedTarget)];
+  if (includeRelated) {
+    for (const file of plan.relevantFiles || []) {
+      if (targets.length >= 3) break;
+      const candidate = normalizeTarget(file.path || file);
+      if (!targets.includes(candidate)) targets.push(candidate);
+    }
+  }
+  return targets;
+}
+
+function createFileProposal(task, plan, requestedTarget, includeRelated = false) {
+  const changes = proposalTargets(plan, requestedTarget, includeRelated)
+    .map((target) => buildSingleChange(task, plan, target));
+  const primary = changes[0];
+  const proposalId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const proposal = {
+    id: proposalId,
+    target: primary.target,
+    targets: changes.map((change) => change.target),
+    operation: primary.operation,
+    anchor: primary.anchor,
+    beforeLength: changes.reduce((total, change) => total + change.beforeLength, 0),
+    afterLength: changes.reduce((total, change) => total + change.afterLength, 0),
+    diff: changes.flatMap((change) => change.diff),
+    unifiedDiff: changes.map((change) => change.unifiedDiff).join("\n\n"),
+    fileCount: changes.length,
     createdAt: new Date().toISOString(),
   };
 
   proposals.set(proposalId, {
     ...proposal,
-    filePath,
-    after,
+    changes: changes.map((change) => ({
+      filePath: change.filePath,
+      target: change.target,
+      after: change.after,
+    })),
     task,
     plan,
   });
@@ -759,7 +817,7 @@ async function handleApi(req, res, url) {
     const plan = body.plan && Array.isArray(body.plan.steps)
       ? body.plan
       : buildTaskPlan(task, files);
-    const proposal = createFileProposal(task, plan, body.target);
+    const proposal = createFileProposal(task, plan, body.target, Boolean(body.includeRelated));
     addHistory({
       type: "proposal",
       status: "aguardando aprovacao",
@@ -780,8 +838,10 @@ async function handleApi(req, res, url) {
     const proposal = proposals.get(String(body.proposalId || ""));
     if (!proposal) return json(res, 404, { error: "Proposta nao encontrada ou expirada." });
 
-    ensureParentDir(proposal.filePath);
-    fs.writeFileSync(proposal.filePath, proposal.after, "utf8");
+    for (const change of proposal.changes || []) {
+      ensureParentDir(change.filePath);
+      fs.writeFileSync(change.filePath, change.after, "utf8");
+    }
     proposals.delete(proposal.id);
     addHistory({
       type: "apply",
@@ -797,7 +857,8 @@ async function handleApi(req, res, url) {
     return json(res, 200, {
       ok: true,
       target: proposal.target,
-      bytes: Buffer.byteLength(proposal.after, "utf8"),
+      targets: proposal.targets,
+      bytes: (proposal.changes || []).reduce((total, change) => total + Buffer.byteLength(change.after, "utf8"), 0),
     });
   }
 

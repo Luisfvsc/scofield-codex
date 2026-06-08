@@ -23,6 +23,7 @@ Primeira versao funcional local do produto.
 - Estima tokens e custo por tarefa com valores configuraveis.
 - Permite configurar politicas locais de permissao em `data/policy.json`.
 - Mostra status e diff Git quando o projeto estiver dentro de um repositorio.
+- Gera diff unificado e pode preparar proposta para ate 3 arquivos relacionados.
 
 ## Como rodar
 
@@ -62,7 +63,7 @@ Se quiser usar o Node.js empacotado pelo ambiente atual:
 ## Proxima evolucao
 
 1. Integrar com GitHub ou GitLab.
-2. Gerar patches por diff unificado com multiplos arquivos.
-3. Trocar JSON local por banco quando houver multiusuario.
-4. Adicionar planos comerciais por usuario/equipe.
-5. Criar contas, equipes e papeis de acesso.
+2. Trocar JSON local por banco quando houver multiusuario.
+3. Adicionar planos comerciais por usuario/equipe.
+4. Criar contas, equipes e papeis de acesso.
+5. Adicionar revisao tipo PR antes de aplicar.

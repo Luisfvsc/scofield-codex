@@ -27,6 +27,7 @@ const allowApply = document.querySelector("#allowApply");
 const maxCost = document.querySelector("#maxCost");
 const blockedPaths = document.querySelector("#blockedPaths");
 const savePolicyBtn = document.querySelector("#savePolicyBtn");
+const includeRelated = document.querySelector("#includeRelated");
 const gitState = document.querySelector("#gitState");
 const gitBranch = document.querySelector("#gitBranch");
 const gitStatus = document.querySelector("#gitStatus");
@@ -95,9 +96,14 @@ function useSuggestedTarget() {
 
 function renderProposal(proposal) {
   currentProposal = proposal;
-  proposalTarget.textContent = proposal.target;
-  proposalState.textContent = `Proposta pronta: ${proposal.operation} (${proposal.anchor}). ${proposal.beforeLength} bytes -> ${proposal.afterLength} bytes.`;
+  proposalTarget.textContent = proposal.targets?.join(", ") || proposal.target;
+  proposalState.textContent = `Proposta pronta: ${proposal.fileCount || 1} arquivo(s), ${proposal.operation} (${proposal.anchor}). ${proposal.beforeLength} bytes -> ${proposal.afterLength} bytes.`;
   applyBtn.disabled = false;
+
+  if (proposal.unifiedDiff) {
+    diffBox.textContent = proposal.unifiedDiff;
+    return;
+  }
 
   diffBox.innerHTML = proposal.diff.map((line) => {
     const cls = line.kind === "add" ? "add" : line.kind === "remove" ? "remove" : "";
@@ -282,6 +288,7 @@ async function prepareProposal() {
       task: currentTask,
       plan: currentPlan,
       target: targetInput.value.trim(),
+      includeRelated: includeRelated.checked,
     }),
   });
   const proposal = await response.json();
@@ -318,7 +325,7 @@ async function applyProposal() {
     return;
   }
 
-  proposalState.textContent = `Aplicado em ${result.target}.`;
+  proposalState.textContent = `Aplicado em ${(result.targets || [result.target]).join(", ")}.`;
   currentProposal = null;
   await loadProject();
   await loadHistory();
