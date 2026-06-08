@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Engenheiro IA MVP</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">MVP local</p>
+        <h1>Engenheiro IA</h1>
+        <p class="subtitle">Agente de engenharia em modo supervisionado: analisa o projeto, propõe um plano e prepara um diff antes de qualquer alteração.</p>
+      </div>
+      <div class="health">
+        <span class="dot"></span>
+        <span id="providerLabel">Servidor local ativo</span>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="Metricas de uso">
+      <article class="metric-card">
+        <span>Tokens estimados</span>
+        <strong id="tokenMetric">0</strong>
+      </article>
+      <article class="metric-card">
+        <span>Custo estimado</span>
+        <strong id="costMetric">US$ 0.000000</strong>
+      </article>
+      <article class="metric-card">
+        <span>Modelo</span>
+        <strong id="modelMetric">local</strong>
+      </article>
+    </section>
+
+    <section class="panel admin">
+      <header>
+        <h2>Permissoes do projeto</h2>
+        <span id="policyState">Carregando</span>
+      </header>
+      <div class="policy-grid">
+        <label class="check-row">
+          <input id="allowAi" type="checkbox">
+          <span>Permitir IA real</span>
+        </label>
+        <label class="check-row">
+          <input id="allowProposals" type="checkbox">
+          <span>Preparar alteracoes</span>
+        </label>
+        <label class="check-row">
+          <input id="allowApply" type="checkbox">
+          <span>Aplicar aprovado</span>
+        </label>
+        <label class="number-row">
+          <span>Limite por tarefa</span>
+          <input id="maxCost" type="number" min="0" step="0.000001">
+        </label>
+        <label class="blocked-row">
+          <span>Caminhos bloqueados</span>
+          <input id="blockedPaths">
+        </label>
+        <button id="savePolicyBtn">Salvar permissoes</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel task">
+        <header>
+          <h2>Tarefa</h2>
+          <span id="projectCount">Lendo projeto...</span>
+        </header>
+        <textarea id="taskInput">Melhorar o prototipo comercial, adicionar uma validacao simples e preparar proximos passos para conectar IA real.</textarea>
+        <label class="target-field">
+          <span>Arquivo alvo</span>
+          <div class="target-row">
+            <input id="targetInput" value="work/agente-ia/tarefas-aprovadas.md">
+            <button id="suggestTargetBtn" class="ghost" disabled>Usar sugestao</button>
+          </div>
+        </label>
+        <div class="actions">
+          <button id="runBtn">Gerar plano</button>
+          <button id="reloadBtn" class="ghost">Recarregar projeto</button>
+        </div>
+      </article>
+
+      <article class="panel files">
+        <header>
+          <h2>Arquivos do projeto</h2>
+          <span id="rootLabel">Clique para escolher alvo</span>
+        </header>
+        <div id="fileList" class="file-list"></div>
+      </article>
+
+      <article class="panel plan">
+        <header>
+          <h2>Plano do agente</h2>
+          <span id="planState">Aguardando</span>
+        </header>
+        <div id="steps" class="steps">
+          <p class="empty">Gere um plano para ver a analise do agente.</p>
+        </div>
+      </article>
+
+      <article class="panel diff">
+        <header>
+          <h2>Diff proposto</h2>
+          <span id="riskLabel">Risco: -</span>
+        </header>
+        <pre id="diffBox">// A proposta aparecera aqui.</pre>
+        <div class="approval">
+          <div>
+            <strong id="proposalTarget">Nenhum arquivo preparado</strong>
+            <span id="proposalState">Gere um plano antes de preparar uma alteracao real.</span>
+          </div>
+          <div class="approval-actions">
+            <button id="proposalBtn" class="ghost" disabled>Preparar alteracao real</button>
+            <button id="applyBtn" disabled>Aplicar aprovado</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel history">
+        <header>
+          <h2>Historico</h2>
+          <span id="historyCount">0 eventos</span>
+        </header>
+        <div id="historyList" class="history-list">
+          <p class="empty">Nenhuma tarefa registrada nesta sessao.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Engenheiro IA - Prototipo</title>
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --ink: #1f2421;
+      --muted: #68706a;
+      --line: #d9ddd6;
+      --green: #1e7b54;
+      --green-soft: #e6f3ec;
+      --blue: #225d8d;
+      --blue-soft: #e7f0f8;
+      --red: #a23b3b;
+      --red-soft: #f7e8e8;
+      --amber: #916414;
+      --amber-soft: #f8efd9;
+      --charcoal: #2d3430;
+      --code: #151a17;
+      --shadow: 0 18px 45px rgba(31, 36, 33, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background: #202823;
+      color: #f7faf6;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 46px;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 45%),
+        #2f8e65;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      display: block;
+      color: #b9c6bc;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav button {
+      color: #dfe8e2;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 11px;
+      border-radius: 8px;
+      text-align: left;
+    }
+
+    .nav button.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    .glyph {
+      width: 22px;
+      height: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      color: #eaf2ed;
+      flex: 0 0 auto;
+    }
+
+    .project-card {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .project-card strong {
+      font-size: 14px;
+    }
+
+    .project-card p {
+      margin: 0;
+      color: #bac7bf;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .main {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+    }
+
+    .topbar {
+      min-height: 74px;
+      background: rgba(246, 247, 244, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      gap: 16px;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .topbar p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-strip {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .pill.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .pill.blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .pill.amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(330px, 0.95fr) minmax(460px, 1.35fr);
+      gap: 18px;
+      padding: 18px;
+      min-height: 0;
+    }
+
+    .column {
+      min-width: 0;
+      display: grid;
+      gap: 18px;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-head {
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-head h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .panel-head span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .task-box {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 122px;
+      max-height: 260px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--ink);
+      background: #fbfcfa;
+      outline: none;
+      line-height: 1.45;
+    }
+
+    textarea:focus {
+      border-color: #7aa88f;
+      box-shadow: 0 0 0 3px rgba(47, 142, 101, 0.12);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .primary {
+      background: var(--green);
+      color: #ffffff;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .secondary {
+      background: #eef1ed;
+      color: var(--charcoal);
+      min-height: 40px;
+      padding: 0 12px;
+      border-radius: 8px;
+      font-weight: 650;
+    }
+
+    .selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .selector input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--green);
+    }
+
+    .feed {
+      min-height: 430px;
+      max-height: calc(100vh - 338px);
+      overflow: auto;
+      padding: 16px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .msg {
+      border-radius: 8px;
+      padding: 12px;
+      line-height: 1.45;
+      font-size: 14px;
+      max-width: 92%;
+    }
+
+    .msg.agent {
+      background: #f0f4ef;
+      border: 1px solid #dce5db;
+    }
+
+    .msg.user {
+      background: #e7f0f8;
+      border: 1px solid #cfe0ef;
+      justify-self: end;
+    }
+
+    .progress {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfa;
+    }
+
+    .step b {
+      font-size: 13px;
+    }
+
+    .step small {
+      display: block;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #edf0ec;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    .step.done .dot {
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .step.live .dot {
+      background: var(--amber);
+      color: #ffffff;
+    }
+
+    .tag {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .right-grid {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .diff-wrap {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .file-tabs {
+      display: flex;
+      gap: 8px;
+      overflow: auto;
+      padding: 12px 14px 0;
+    }
+
+    .file-tab {
+      padding: 8px 10px;
+      border-radius: 8px 8px 0 0;
+      background: #eef1ed;
+      color: var(--charcoal);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .file-tab.active {
+      background: var(--code);
+      color: #ffffff;
+    }
+
+    .codebox {
+      background: var(--code);
+      color: #d7e1d9;
+      overflow: auto;
+      min-height: 460px;
+      max-height: calc(100vh - 240px);
+      padding: 15px 0;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .line {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 14px;
+      padding: 0 14px;
+      min-height: 22px;
+    }
+
+    .line span:first-child {
+      color: #6d7a70;
+      text-align: right;
+      user-select: none;
+    }
+
+    .line.add {
+      background: rgba(45, 128, 88, 0.22);
+      color: #dff7e8;
+    }
+
+    .line.remove {
+      background: rgba(162, 59, 59, 0.22);
+      color: #f9dedf;
+    }
+
+    .line.neutral {
+      color: #adbbb0;
+    }
+
+    .bottom-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .metric {
+      padding: 15px;
+      display: grid;
+      gap: 8px;
+      min-height: 118px;
+    }
+
+    .metric strong {
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .meter {
+      height: 8px;
+      border-radius: 999px;
+      background: #edf0ec;
+      overflow: hidden;
+    }
+
+    .meter i {
+      display: block;
+      height: 100%;
+      width: var(--value);
+      background: var(--green);
+      border-radius: inherit;
+    }
+
+    @media (max-width: 1040px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .feed,
+      .codebox {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 660px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px;
+      }
+
+      .workspace {
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .bottom-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .step {
+        grid-template-columns: 28px minmax(0, 1fr);
+      }
+
+      .tag {
+        grid-column: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">AI</div>
+        <div>
+          <h1>Engenheiro IA</h1>
+          <span>Agente de codigo</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Navegacao">
+        <button class="active"><span class="glyph">T</span> Tarefas</button>
+        <button><span class="glyph">R</span> Repositorios</button>
+        <button><span class="glyph">P</span> Politicas</button>
+        <button><span class="glyph">C</span> Custos</button>
+        <button><span class="glyph">A</span> Auditoria</button>
+      </nav>
+
+      <div class="project-card">
+        <strong>Projeto conectado</strong>
+        <p>app-cliente-web</p>
+        <p>Branch: feature/onboarding</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>Console de tarefa</h2>
+          <p>Fluxo supervisionado para planejar, alterar, testar e revisar codigo.</p>
+        </div>
+        <div class="status-strip">
+          <span class="pill green">Sandbox ativo</span>
+          <span class="pill blue">Git conectado</span>
+          <span class="pill amber">Modo revisao</span>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <div class="column">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Nova tarefa</h3>
+              <span>Cliente: Acme</span>
+            </div>
+            <div class="task-box">
+              <textarea id="taskInput">Criar uma tela de onboarding para novos usuarios, adicionar validacao no formulario e escrever testes basicos.</textarea>
+              <div class="controls">
+                <label class="selector">
+                  <input id="reviewOnly" type="checkbox" checked>
+                  Exigir aprovacao antes de aplicar
+                </label>
+                <div>
+                  <button class="secondary" id="clearBtn">Limpar</button>
+                  <button class="primary" id="runBtn">Executar tarefa</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Conversa</h3>
+              <span id="chatState">Pronto</span>
+            </div>
+            <div class="feed" id="feed">
+              <div class="msg agent">Escolha uma tarefa e eu preparo um plano curto antes de alterar o projeto.</div>
+            </div>
+          </section>
+        </div>
+
+        <div class="right-grid">
+          <section class="panel diff-wrap">
+            <div class="panel-head">
+              <h3>Plano e diff</h3>
+              <span id="diffState">Aguardando tarefa</span>
+            </div>
+            <div class="file-tabs">
+              <div class="file-tab active">src/pages/onboarding.tsx</div>
+              <div class="file-tab">src/lib/validation.ts</div>
+              <div class="file-tab">tests/onboarding.spec.ts</div>
+            </div>
+            <div class="codebox" id="codebox" aria-label="Diff">
+              <div class="line neutral"><span>1</span><span>// O diff aparecera aqui depois da execucao simulada.</span></div>
+              <div class="line neutral"><span>2</span><span>// Esta area representa a revisao antes de aplicar no repositorio.</span></div>
+            </div>
+          </section>
+
+          <div class="bottom-row">
+            <section class="panel metric">
+              <span>Progresso</span>
+              <strong id="progressMetric">0%</strong>
+              <div class="meter" style="--value: 0%" id="progressMeter"><i></i></div>
+            </section>
+            <section class="panel metric">
+              <span>Arquivos alterados</span>
+              <strong id="filesMetric">0</strong>
+              <span>Diff revisavel antes de confirmar.</span>
+            </section>
+            <section class="panel metric">
+              <span>Risco estimado</span>
+              <strong id="riskMetric">Baixo</strong>
+              <span id="riskText">Sem mudancas aplicadas ainda.</span>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const runBtn = document.querySelector("#runBtn");
+    const clearBtn = document.querySelector("#clearBtn");
+    const feed = document.querySelector("#feed");
+    const taskInput = document.querySelector("#taskInput");
+    const codebox = document.querySelector("#codebox");
+    const chatState = document.querySelector("#chatState");
+    const diffState = document.querySelector("#diffState");
+    const progressMetric = document.querySelector("#progressMetric");
+    const filesMetric = document.querySelector("#filesMetric");
+    const riskMetric = document.querySelector("#riskMetric");
+    const riskText = document.querySelector("#riskText");
+    const progressMeter = document.querySelector("#progressMeter");
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    function addMessage(kind, text) {
+      const node = document.createElement("div");
+      node.className = `msg ${kind}`;
+      node.textContent = text;
+      feed.appendChild(node);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function setProgress(value) {
+      progressMetric.textContent = `${value}%`;
+      progressMeter.style.setProperty("--value", `${value}%`);
+    }
+
+    function renderPlan(activeIndex) {
+      const steps = [
+        ["Ler contexto", "Mapear rotas, componentes e testes existentes."],
+        ["Planejar mudanca", "Criar tela, validacao e cobertura minima."],
+        ["Editar arquivos", "Preparar alteracoes em modo revisao."],
+        ["Executar testes", "Validar formulario e fluxo de entrada."],
+        ["Gerar resumo", "Entregar diff, riscos e proximas acoes."]
+      ];
+
+      codebox.innerHTML = steps.map((step, index) => {
+        const status = index < activeIndex ? "done" : index === activeIndex ? "live" : "";
+        const tag = index < activeIndex ? "concluido" : index === activeIndex ? "em andamento" : "pendente";
+        return `
+          <div class="step ${status}">
+            <div class="dot">${index + 1}</div>
+            <div><b>${step[0]}</b><small>${step[1]}</small></div>
+            <div class="tag">${tag}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderDiff() {
+      const lines = [
+        ["neutral", "18", "import { validateOnboarding } from \"../lib/validation\";"],
+        ["neutral", "19", ""],
+        ["add", "20", "const fields = [\"nome\", \"email\", \"empresa\"];"],
+        ["add", "21", ""],
+        ["add", "22", "export function OnboardingPage() {"],
+        ["add", "23", "  const [errors, setErrors] = useState({});"],
+        ["add", "24", "  function submit(formData) {"],
+        ["add", "25", "    const result = validateOnboarding(formData);"],
+        ["add", "26", "    setErrors(result.errors);"],
+        ["add", "27", "    if (result.ok) startWorkspaceSetup(formData);"],
+        ["add", "28", "  }"],
+        ["neutral", "29", ""],
+        ["remove", "30", "  return <EmptyState />;"],
+        ["add", "31", "  return <OnboardingForm fields={fields} errors={errors} onSubmit={submit} />;"],
+        ["neutral", "32", "}"],
+        ["neutral", "33", ""],
+        ["add", "34", "test(\"bloqueia envio sem email valido\", async () => {"],
+        ["add", "35", "  await page.fill(\"[name=email]\", \"email-invalido\");"],
+        ["add", "36", "  await expect(page.getByText(\"Email invalido\")).toBeVisible();"],
+        ["add", "37", "});"]
+      ];
+
+      codebox.innerHTML = lines.map(([type, number, text]) => `
+        <div class="line ${type}">
+          <span>${number}</span>
+          <span>${escapeHtml(text)}</span>
+        </div>
+      `).join("");
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    async function runTask() {
+      const text = taskInput.value.trim();
+      if (!text) {
+        addMessage("agent", "Descreva a tarefa para iniciar.");
+        return;
+      }
+
+      runBtn.disabled = true;
+      clearBtn.disabled = true;
+      chatState.textContent = "Executando";
+      diffState.textContent = "Planejando";
+      feed.innerHTML = "";
+      addMessage("user", text);
+      addMessage("agent", "Vou analisar o projeto, montar um plano curto e preparar as alteracoes em modo revisao.");
+      filesMetric.textContent = "0";
+      riskMetric.textContent = "Baixo";
+      riskText.textContent = "Aguardando analise.";
+
+      for (let index = 0; index < 5; index += 1) {
+        renderPlan(index);
+        setProgress(index * 20);
+        await sleep(650);
+      }
+
+      setProgress(100);
+      renderDiff();
+      filesMetric.textContent = "3";
+      riskMetric.textContent = "Medio";
+      riskText.textContent = "Mudanca de fluxo com testes basicos preparados.";
+      chatState.textContent = "Revisao pronta";
+      diffState.textContent = "Diff preparado";
+      addMessage("agent", "Preparei o plano, 3 arquivos alterados e testes basicos. Nenhuma mudanca foi aplicada sem aprovacao.");
+      runBtn.disabled = false;
+      clearBtn.disabled = false;
+    }
+
+    clearBtn.addEventListener("click", () => {
+      taskInput.value = "";
+      feed.innerHTML = '<div class="msg agent">Escolha uma tarefa e eu preparo um plano curto antes de alterar o projeto.</div>';
+      codebox.innerHTML = '<div class="line neutral"><span>1</span><span>// O diff aparecera aqui depois da execucao simulada.</span></div><div class="line neutral"><span>2</span><span>// Esta area representa a revisao antes de aplicar no repositorio.</span></div>';
+      setProgress(0);
+      filesMetric.textContent = "0";
+      riskMetric.textContent = "Baixo";
+      riskText.textContent = "Sem mudancas aplicadas ainda.";
+      chatState.textContent = "Pronto";
+      diffState.textContent = "Aguardando tarefa";
+    });
+
+    runBtn.addEventListener("click", runTask);
+  </script>
+</body>
+</html>
