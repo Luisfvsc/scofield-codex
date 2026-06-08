@@ -121,6 +121,23 @@
         </div>
       </article>
 
+      <article class="panel git-panel">
+        <header>
+          <h2>Git</h2>
+          <span id="gitState">Verificando</span>
+        </header>
+        <div class="git-body">
+          <div class="git-summary">
+            <strong id="gitBranch">Sem repositorio</strong>
+            <button id="refreshGitBtn" class="ghost">Atualizar Git</button>
+          </div>
+          <div id="gitStatus" class="git-status">
+            <p class="empty">Status ainda nao carregado.</p>
+          </div>
+          <pre id="gitDiffBox">// Diff do Git aparecera aqui quando houver repositorio.</pre>
+        </div>
+      </article>
+
       <article class="panel history">
         <header>
           <h2>Historico</h2>

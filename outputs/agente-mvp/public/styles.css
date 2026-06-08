@@ -445,6 +445,50 @@ pre {
   grid-column: 1 / -1;
 }
 
+.git-panel {
+  grid-column: 1 / -1;
+}
+
+.git-body {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.65fr) minmax(360px, 1.35fr);
+  gap: 14px;
+  padding: 14px;
+}
+
+.git-summary {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.git-summary strong {
+  font-size: 14px;
+}
+
+.git-status {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.git-line {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 9px 10px;
+  color: var(--ink);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .history-list {
   padding: 14px;
   display: grid;
@@ -514,6 +558,10 @@ pre {
   }
 
   .policy-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .git-body {
     grid-template-columns: 1fr;
   }
 

@@ -27,6 +27,11 @@ const allowApply = document.querySelector("#allowApply");
 const maxCost = document.querySelector("#maxCost");
 const blockedPaths = document.querySelector("#blockedPaths");
 const savePolicyBtn = document.querySelector("#savePolicyBtn");
+const gitState = document.querySelector("#gitState");
+const gitBranch = document.querySelector("#gitBranch");
+const gitStatus = document.querySelector("#gitStatus");
+const gitDiffBox = document.querySelector("#gitDiffBox");
+const refreshGitBtn = document.querySelector("#refreshGitBtn");
 
 let currentTask = "";
 let currentPlan = null;
@@ -141,6 +146,30 @@ function renderHistory(entries, totals) {
   `).join("");
 }
 
+function renderGit(info) {
+  if (!info.available) {
+    gitState.textContent = "Indisponivel";
+    gitBranch.textContent = "Sem repositorio Git";
+    gitStatus.innerHTML = `<p class="empty">${escapeHtml(info.message || "Git nao disponivel.")}</p>`;
+    gitDiffBox.textContent = "// Sem diff Git.";
+    return;
+  }
+
+  gitState.textContent = `${info.status.length} arquivo${info.status.length === 1 ? "" : "s"}`;
+  gitBranch.textContent = `Branch: ${info.branch}`;
+  gitStatus.innerHTML = info.status.length
+    ? info.status.map((line) => `<div class="git-line">${escapeHtml(line)}</div>`).join("")
+    : '<p class="empty">Arvore limpa.</p>';
+  gitDiffBox.textContent = info.diff || "// Nenhum diff local.";
+}
+
+async function loadGit() {
+  gitState.textContent = "Verificando...";
+  const response = await fetch("/api/git");
+  const info = await response.json();
+  renderGit(info);
+}
+
 async function loadHistory() {
   const response = await fetch("/api/history");
   const data = await response.json();
@@ -201,6 +230,7 @@ async function loadProject() {
   renderPolicy(project.policy);
   renderFiles(project.files);
   await loadHistory();
+  await loadGit();
 }
 
 async function runTask() {
@@ -292,6 +322,7 @@ async function applyProposal() {
   currentProposal = null;
   await loadProject();
   await loadHistory();
+  await loadGit();
 }
 
 runBtn.addEventListener("click", runTask);
@@ -300,6 +331,7 @@ proposalBtn.addEventListener("click", prepareProposal);
 applyBtn.addEventListener("click", applyProposal);
 suggestTargetBtn.addEventListener("click", useSuggestedTarget);
 savePolicyBtn.addEventListener("click", savePolicy);
+refreshGitBtn.addEventListener("click", loadGit);
 loadProject().catch((error) => {
   projectCount.textContent = "Falha ao ler projeto";
   fileList.innerHTML = `<p class="empty">${error.message}</p>`;

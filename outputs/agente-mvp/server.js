@@ -1,6 +1,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { execFile } = require("child_process");
 
 const PORT = Number(process.env.PORT || 4173);
 const ROOT = path.resolve(__dirname, "..", "..");
@@ -151,6 +152,49 @@ function readRequest(req) {
     req.on("end", () => resolve(data));
     req.on("error", reject);
   });
+}
+
+function execFileText(command, args) {
+  return new Promise((resolve) => {
+    execFile(command, args, {
+      cwd: ROOT,
+      windowsHide: true,
+      timeout: 5000,
+      maxBuffer: 1024 * 1024,
+    }, (error, stdout, stderr) => {
+      resolve({
+        ok: !error,
+        stdout: String(stdout || ""),
+        stderr: String(stderr || ""),
+        error: error ? error.message : "",
+      });
+    });
+  });
+}
+
+async function gitInfo() {
+  const root = await execFileText("git", ["rev-parse", "--show-toplevel"]);
+  if (!root.ok) {
+    return {
+      available: false,
+      message: "Esta pasta nao esta em um repositorio Git.",
+      branch: "",
+      status: [],
+      diff: "",
+    };
+  }
+
+  const branch = await execFileText("git", ["branch", "--show-current"]);
+  const status = await execFileText("git", ["status", "--short"]);
+  const diff = await execFileText("git", ["diff", "--", "."]);
+
+  return {
+    available: true,
+    root: root.stdout.trim(),
+    branch: branch.stdout.trim() || "detached",
+    status: status.stdout.split(/\r?\n/).filter(Boolean).slice(0, 80),
+    diff: diff.stdout.slice(0, 20000),
+  };
 }
 
 function scanFiles(dir, depth = 0, prefix = "") {
@@ -643,6 +687,10 @@ async function handleApi(req, res, url) {
       entries: history.slice(0, 30),
       totals: historyTotals(),
     });
+  }
+
+  if (url.pathname === "/api/git" && req.method === "GET") {
+    return json(res, 200, await gitInfo());
   }
 
   if (url.pathname === "/api/task" && req.method === "POST") {
