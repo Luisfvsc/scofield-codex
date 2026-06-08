@@ -437,6 +437,50 @@ pre {
   gap: 14px;
 }
 
+.review-box {
+  border-top: 1px solid var(--line);
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+  background: #fbfcfa;
+}
+
+.review-box strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.review-box span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.review-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.review-check {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.review-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+  flex: 0 0 auto;
+}
+
 .approval strong {
   display: block;
   margin-bottom: 4px;

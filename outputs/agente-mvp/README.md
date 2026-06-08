@@ -24,6 +24,7 @@ Primeira versao funcional local do produto.
 - Permite configurar politicas locais de permissao em `data/policy.json`.
 - Mostra status e diff Git quando o projeto estiver dentro de um repositorio.
 - Gera diff unificado e pode preparar proposta para ate 3 arquivos relacionados.
+- Exige checklist de revisao tipo PR antes de aplicar uma proposta.
 
 ## Como rodar
 
@@ -66,4 +67,4 @@ Se quiser usar o Node.js empacotado pelo ambiente atual:
 2. Trocar JSON local por banco quando houver multiusuario.
 3. Adicionar planos comerciais por usuario/equipe.
 4. Criar contas, equipes e papeis de acesso.
-5. Adicionar revisao tipo PR antes de aplicar.
+5. Criar revisoes compartilhaveis por link.

@@ -629,6 +629,14 @@ function createFileProposal(task, plan, requestedTarget, includeRelated = false)
     diff: changes.flatMap((change) => change.diff),
     unifiedDiff: changes.map((change) => change.unifiedDiff).join("\n\n"),
     fileCount: changes.length,
+    requiresReview: true,
+    review: {
+      checks: [
+        "Li o diff unificado.",
+        "Conferi os arquivos alvo.",
+        "Aceito aplicar esta proposta no workspace local.",
+      ],
+    },
     createdAt: new Date().toISOString(),
   };
 
@@ -837,6 +845,9 @@ async function handleApi(req, res, url) {
     const body = raw ? JSON.parse(raw) : {};
     const proposal = proposals.get(String(body.proposalId || ""));
     if (!proposal) return json(res, 404, { error: "Proposta nao encontrada ou expirada." });
+    if (proposal.requiresReview && body.reviewApproved !== true) {
+      return json(res, 400, { error: "Revise e aprove a proposta antes de aplicar." });
+    }
 
     for (const change of proposal.changes || []) {
       ensureParentDir(change.filePath);

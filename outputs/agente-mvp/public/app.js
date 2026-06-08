@@ -33,11 +33,14 @@ const gitBranch = document.querySelector("#gitBranch");
 const gitStatus = document.querySelector("#gitStatus");
 const gitDiffBox = document.querySelector("#gitDiffBox");
 const refreshGitBtn = document.querySelector("#refreshGitBtn");
+const reviewState = document.querySelector("#reviewState");
+const reviewChecks = document.querySelector("#reviewChecks");
 
 let currentTask = "";
 let currentPlan = null;
 let currentProposal = null;
 let currentPolicy = null;
+let reviewApproved = false;
 
 function formatSize(size) {
   if (!size) return "";
@@ -64,6 +67,7 @@ function renderFiles(files) {
 function renderPlan(result) {
   currentPlan = result;
   currentProposal = null;
+  reviewApproved = false;
   proposalBtn.disabled = false;
   suggestTargetBtn.disabled = !result.suggestedTarget;
   applyBtn.disabled = true;
@@ -71,6 +75,8 @@ function renderPlan(result) {
   proposalState.textContent = result.suggestedTarget
     ? `Sugestao de alvo: ${result.suggestedTarget}`
     : "Revise o plano e prepare uma proposta aplicavel.";
+  reviewState.textContent = "Prepare uma proposta para revisar.";
+  reviewChecks.innerHTML = "";
 
   steps.innerHTML = result.steps.map((step, index) => `
     <div class="step">
@@ -96,9 +102,11 @@ function useSuggestedTarget() {
 
 function renderProposal(proposal) {
   currentProposal = proposal;
+  reviewApproved = false;
   proposalTarget.textContent = proposal.targets?.join(", ") || proposal.target;
   proposalState.textContent = `Proposta pronta: ${proposal.fileCount || 1} arquivo(s), ${proposal.operation} (${proposal.anchor}). ${proposal.beforeLength} bytes -> ${proposal.afterLength} bytes.`;
-  applyBtn.disabled = false;
+  applyBtn.disabled = true;
+  renderReview(proposal);
 
   if (proposal.unifiedDiff) {
     diffBox.textContent = proposal.unifiedDiff;
@@ -109,6 +117,33 @@ function renderProposal(proposal) {
     const cls = line.kind === "add" ? "add" : line.kind === "remove" ? "remove" : "";
     return `<span class="${cls}">${escapeHtml(line.text)}</span>`;
   }).join("\n");
+}
+
+function updateReviewState() {
+  const checks = [...reviewChecks.querySelectorAll("input[type=checkbox]")];
+  reviewApproved = checks.length > 0 && checks.every((check) => check.checked);
+  applyBtn.disabled = !reviewApproved;
+  reviewState.textContent = reviewApproved
+    ? "Revisao aprovada. Aplicacao liberada."
+    : "Marque todos os itens para liberar aplicacao.";
+}
+
+function renderReview(proposal) {
+  const checks = proposal.review?.checks || [
+    "Li o diff.",
+    "Conferi os arquivos alvo.",
+    "Aprovo a aplicacao local.",
+  ];
+  reviewState.textContent = "Marque todos os itens para liberar aplicacao.";
+  reviewChecks.innerHTML = checks.map((label, index) => `
+    <label class="review-check">
+      <input type="checkbox" data-review-index="${index}">
+      <span>${escapeHtml(label)}</span>
+    </label>
+  `).join("");
+  reviewChecks.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("change", updateReviewState);
+  });
 }
 
 function escapeHtml(value) {
@@ -250,11 +285,14 @@ async function runTask() {
   proposalBtn.disabled = true;
   applyBtn.disabled = true;
   suggestTargetBtn.disabled = true;
+  reviewApproved = false;
   currentTask = task;
   planState.textContent = "Analisando...";
   diffBox.textContent = "// Preparando proposta...";
   proposalTarget.textContent = "Nenhum arquivo preparado";
   proposalState.textContent = "Aguardando plano.";
+  reviewState.textContent = "Prepare uma proposta para revisar.";
+  reviewChecks.innerHTML = "";
 
   const response = await fetch("/api/task", {
     method: "POST",
@@ -314,7 +352,10 @@ async function applyProposal() {
   const response = await fetch("/api/apply", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ proposalId: currentProposal.id }),
+    body: JSON.stringify({
+      proposalId: currentProposal.id,
+      reviewApproved,
+    }),
   });
   const result = await response.json();
 
@@ -327,6 +368,9 @@ async function applyProposal() {
 
   proposalState.textContent = `Aplicado em ${(result.targets || [result.target]).join(", ")}.`;
   currentProposal = null;
+  reviewApproved = false;
+  reviewState.textContent = "Proposta aplicada.";
+  reviewChecks.innerHTML = "";
   await loadProject();
   await loadHistory();
   await loadGit();
