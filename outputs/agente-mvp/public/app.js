@@ -35,6 +35,8 @@ const gitDiffBox = document.querySelector("#gitDiffBox");
 const refreshGitBtn = document.querySelector("#refreshGitBtn");
 const reviewState = document.querySelector("#reviewState");
 const reviewChecks = document.querySelector("#reviewChecks");
+const proposalList = document.querySelector("#proposalList");
+const proposalCount = document.querySelector("#proposalCount");
 
 let currentTask = "";
 let currentPlan = null;
@@ -117,6 +119,43 @@ function renderProposal(proposal) {
     const cls = line.kind === "add" ? "add" : line.kind === "remove" ? "remove" : "";
     return `<span class="${cls}">${escapeHtml(line.text)}</span>`;
   }).join("\n");
+}
+
+function renderProposalList(proposals) {
+  proposalCount.textContent = `${proposals.length} proposta${proposals.length === 1 ? "" : "s"}`;
+  if (!proposals.length) {
+    proposalList.innerHTML = '<p class="empty">Nenhuma proposta pendente.</p>';
+    return;
+  }
+
+  proposalList.innerHTML = proposals.map((proposal) => `
+    <button class="proposal-item" data-proposal-id="${escapeHtml(proposal.id)}">
+      <strong>${escapeHtml((proposal.targets || [proposal.target]).join(", "))}</strong>
+      <span>${formatTime(proposal.createdAt)} · ${proposal.fileCount || 1} arquivo(s)</span>
+      <small>${escapeHtml(proposal.operation || "revisao pendente")}</small>
+    </button>
+  `).join("");
+
+  proposalList.querySelectorAll(".proposal-item").forEach((item) => {
+    item.addEventListener("click", () => loadProposal(item.dataset.proposalId));
+  });
+}
+
+async function loadProposals() {
+  const response = await fetch("/api/proposals");
+  const data = await response.json();
+  renderProposalList(data.proposals || []);
+}
+
+async function loadProposal(id) {
+  const response = await fetch(`/api/proposals/${encodeURIComponent(id)}`);
+  const proposal = await response.json();
+  if (!response.ok) {
+    proposalState.textContent = proposal.error || "Falha ao reabrir proposta.";
+    return;
+  }
+  renderProposal(proposal);
+  proposalState.textContent = `Proposta reaberta: ${proposal.fileCount || 1} arquivo(s).`;
 }
 
 function updateReviewState() {
@@ -272,6 +311,7 @@ async function loadProject() {
   renderFiles(project.files);
   await loadHistory();
   await loadGit();
+  await loadProposals();
 }
 
 async function runTask() {
@@ -339,6 +379,7 @@ async function prepareProposal() {
 
   renderProposal(proposal);
   await loadHistory();
+  await loadProposals();
   proposalBtn.disabled = false;
 }
 
@@ -374,6 +415,7 @@ async function applyProposal() {
   await loadProject();
   await loadHistory();
   await loadGit();
+  await loadProposals();
 }
 
 runBtn.addEventListener("click", runTask);

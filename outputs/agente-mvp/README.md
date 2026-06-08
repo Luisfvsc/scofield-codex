@@ -25,6 +25,7 @@ Primeira versao funcional local do produto.
 - Mostra status e diff Git quando o projeto estiver dentro de um repositorio.
 - Gera diff unificado e pode preparar proposta para ate 3 arquivos relacionados.
 - Exige checklist de revisao tipo PR antes de aplicar uma proposta.
+- Persiste propostas pendentes em `data/proposals.json` e permite reabrir revisoes.
 
 ## Como rodar
 
@@ -64,7 +65,7 @@ Se quiser usar o Node.js empacotado pelo ambiente atual:
 ## Proxima evolucao
 
 1. Integrar com GitHub ou GitLab.
-2. Trocar JSON local por banco quando houver multiusuario.
-3. Adicionar planos comerciais por usuario/equipe.
-4. Criar contas, equipes e papeis de acesso.
-5. Criar revisoes compartilhaveis por link.
+2. Criar revisoes compartilhaveis por link.
+3. Trocar JSON local por banco quando houver multiusuario.
+4. Adicionar planos comerciais por usuario/equipe.
+5. Criar contas, equipes e papeis de acesso.

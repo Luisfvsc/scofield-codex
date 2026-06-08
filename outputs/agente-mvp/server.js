@@ -14,8 +14,10 @@ const proposals = new Map();
 const DATA_DIR = path.join(__dirname, "data");
 const HISTORY_FILE = path.join(DATA_DIR, "history.json");
 const POLICY_FILE = path.join(DATA_DIR, "policy.json");
+const PROPOSALS_FILE = path.join(DATA_DIR, "proposals.json");
 const history = loadHistory();
 const policy = loadPolicy();
+loadProposals();
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -88,6 +90,24 @@ function savePolicy() {
 
 function saveHistory() {
   writeJsonFile(HISTORY_FILE, history.slice(0, 50));
+}
+
+function loadProposals() {
+  const data = readJsonFile(PROPOSALS_FILE, []);
+  if (!Array.isArray(data)) return;
+  for (const proposal of data) {
+    if (proposal?.id) proposals.set(proposal.id, proposal);
+  }
+}
+
+function saveProposals() {
+  writeJsonFile(PROPOSALS_FILE, [...proposals.values()].slice(-50));
+}
+
+function publicProposal(proposal) {
+  if (!proposal) return null;
+  const { changes, plan, ...safe } = proposal;
+  return safe;
 }
 
 function estimateTokens(text) {
@@ -650,6 +670,7 @@ function createFileProposal(task, plan, requestedTarget, includeRelated = false)
     task,
     plan,
   });
+  saveProposals();
 
   return proposal;
 }
@@ -755,6 +776,19 @@ async function handleApi(req, res, url) {
     });
   }
 
+  if (url.pathname === "/api/proposals" && req.method === "GET") {
+    return json(res, 200, {
+      proposals: [...proposals.values()].map(publicProposal).reverse(),
+    });
+  }
+
+  if (url.pathname.startsWith("/api/proposals/") && req.method === "GET") {
+    const id = decodeURIComponent(url.pathname.replace("/api/proposals/", ""));
+    const proposal = proposals.get(id);
+    if (!proposal) return json(res, 404, { error: "Proposta nao encontrada." });
+    return json(res, 200, publicProposal(proposal));
+  }
+
   if (url.pathname === "/api/git" && req.method === "GET") {
     return json(res, 200, await gitInfo());
   }
@@ -854,6 +888,7 @@ async function handleApi(req, res, url) {
       fs.writeFileSync(change.filePath, change.after, "utf8");
     }
     proposals.delete(proposal.id);
+    saveProposals();
     addHistory({
       type: "apply",
       status: "aplicado",

@@ -508,6 +508,10 @@ pre {
   grid-column: 1 / -1;
 }
 
+.proposals-panel {
+  grid-column: 1 / -1;
+}
+
 .git-body {
   display: grid;
   grid-template-columns: minmax(260px, 0.65fr) minmax(360px, 1.35fr);
@@ -546,6 +550,50 @@ pre {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.proposal-list {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.proposal-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  color: var(--ink);
+  padding: 12px;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  min-height: 96px;
+}
+
+.proposal-item:hover {
+  border-color: #9bb9a9;
+  background: #f4faf6;
+}
+
+.proposal-item strong,
+.proposal-item span,
+.proposal-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proposal-item strong {
+  font-size: 13px;
+}
+
+.proposal-item span,
+.proposal-item small {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .history-list {
